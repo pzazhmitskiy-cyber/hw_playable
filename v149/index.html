@@ -3133,7 +3133,8 @@ function openSwordChoice(it, kind = 'w') {
   function pick(k) {
     if (done) return; done = true; app.ticker.remove(tk); const d = BR[k];
     if (XB) xbBr = k; else { swordBr = k; app.ticker.add(swordAura); }
-    if (XB) {} else if (k === 'ice') { GEARSK.w[4] = GEARSK.w[5]; ICON.w4 = ICON.w5; } else { GEARSK.w[5] = GEARSK.w[4]; ICON.w5 = ICON.w4; }
+    if (XB) {} else if (k === 'ice') { GEARSK.w[4] = GEARSK.w[5]; ICON.w4 = ICON.w5; GEARSK.w[5] = [swordSkin('weapon/sword_star')]; ICON.w5 = bakeGalIcon(GEARSK.w[5]); }   // ice: sapphire heart, then the star sword
+    else { GEARSK.w[5] = [swordSkin('weapon/sword_corrupted')]; ICON.w5 = bakeGalIcon(GEARSK.w[5]); }   // fire: the flame sword, then the lava-cracked blade
     const c = cards[k === K2[0] ? 0 : 1], o = cards[k === K2[0] ? 1 : 0];
     tween(o, { alpha: 0 }, 200); tween(or, { alpha: 0 }, 150); hand.visible = false;
     tween(c.scale, { x: 1.15, y: 1.15 }, 160, E.outQuad).then(() => tween(c.scale, { x: .3, y: .3 }, 320, E.inQuad));
@@ -3148,12 +3149,28 @@ function openSwordChoice(it, kind = 'w') {
     });
   }
 }
-function swordAura() {   // embers or frost motes drifting off Kai's blade once the branch is on him
-  if (!swordBr || !bud || bud.wt < 4 || phase !== 'play' || Math.random() > .12) return;
-  const col = BR[swordBr].fx, x = bud.root.x + 40 + Math.random() * 90, y = bud.root.y - 120 - Math.random() * 110;
-  const p = new PIXI.Sprite(Math.random() < .5 ? TX.spark_texture : TX.glitter_texture); p.anchor.set(.5); p.blendMode = 'add'; p.tint = col; p.scale.set(.25 + Math.random() * .25); p.x = x; p.y = y; fxFront.addChild(p);
-  const vy = swordBr === 'fire' ? -90 : 30, vx = (Math.random() - .5) * 40;
-  tween({ t: 0 }, { t: 1 }, 700, E.linear, t => { p.x = x + vx * t; p.y = y + vy * t; p.alpha = 1 - t; }).then(() => p.destroy());
+let auraTex = {};
+function auraTexOf(k) {   // a small flame tongue / a six-armed snowflake, drawn once
+  if (auraTex[k]) return auraTex[k];
+  const g = new PIXI.Graphics();
+  if (k === 'fire') { g.moveTo(16, 0).bezierCurveTo(22, 14, 30, 22, 30, 34).bezierCurveTo(30, 44, 24, 50, 16, 50).bezierCurveTo(8, 50, 2, 44, 2, 34).bezierCurveTo(2, 24, 12, 18, 16, 0).fill(0xff7a1a);
+    g.moveTo(16, 18).bezierCurveTo(20, 26, 24, 32, 24, 38).bezierCurveTo(24, 44, 20, 47, 16, 47).bezierCurveTo(12, 47, 8, 44, 8, 38).bezierCurveTo(8, 32, 13, 28, 16, 18).fill(0xffe27a); }
+  else { for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, c = Math.cos(a), sn = Math.sin(a), x = 20 + c * 17, y = 20 + sn * 17; g.moveTo(20, 20).lineTo(x, y);
+      const bx = 20 + c * 10, by = 20 + sn * 10; g.moveTo(bx, by).lineTo(bx + Math.cos(a + .7) * 6, by + Math.sin(a + .7) * 6).moveTo(bx, by).lineTo(bx + Math.cos(a - .7) * 6, by + Math.sin(a - .7) * 6); }
+    g.stroke({ color: 0xffffff, width: 3, cap: 'round' }); g.circle(20, 20, 3).fill(0xffffff); }
+  const tex = app.renderer.generateTexture({ target: g, resolution: 2 }); g.destroy(); return auraTex[k] = tex;
+}
+function swordAura() {   // small flame tongues licking up the blade, or snowflakes drifting off it, once the branch is on Kai
+  if (!swordBr || !bud || bud.wt < 4 || phase !== 'play' || Math.random() > (swordBr === 'fire' ? .3 : .22) * (bud.wt >= 5 ? 1.7 : 1)) return;
+  const BIG = bud.wt >= 5 ? 1.35 : 1;
+  const sp = bud.sp, sl = sp && sp.skeleton.findSlot('sword'), att = sl && sl.getAttachment(); if (!att || att.height == null) return;
+  const L = att.height * (att.scaleY || 1), t = Math.random(), v = { x: lerp(att.x - L * .25, att.x + L * .45, t), y: (att.y || 0) + (Math.random() - .5) * 20 }; sl.bone.localToWorld(v);
+  const x = sp.x + sp.scale.x * v.x, y = sp.y + sp.scale.y * v.y, F = swordBr === 'fire';
+  const p = new PIXI.Sprite(auraTexOf(swordBr)); p.anchor.set(.5, F ? .8 : .5); p.x = x; p.y = y; bud.root.addChild(p);
+  if (F) { p.blendMode = 'add'; const s0 = (.35 + Math.random() * .3) * BIG; p.scale.set(s0 * .8, s0); p.rotation = (Math.random() - .5) * .3;
+    tween({ k: 0 }, { k: 1 }, 380 + Math.random() * 200, E.linear, k => { p.y = y - 40 * k; p.scale.set(s0 * .8 * (1 - k * .5), s0 * (1 - k * .7)); p.alpha = k < .2 ? k * 5 : 1 - (k - .2) / .8; }).then(() => p.destroy()); }
+  else { p.tint = 0xd8f6ff; const s0 = (.42 + Math.random() * .3) * BIG, vx = (Math.random() - .5) * 30, r0 = Math.random() * 6; p.scale.set(s0);
+    tween({ k: 0 }, { k: 1 }, 1000 + Math.random() * 400, E.linear, k => { p.x = x + vx * k + Math.sin(k * 6 + r0) * 6; p.y = y + 45 * k; p.rotation = r0 + k * 1.5; p.alpha = k < .15 ? k / .15 : 1 - (k - .15) / .85; }).then(() => p.destroy()); }
 }
 // an item that can never be merged any further on this board flies to its owner right away
 function isFinal(it) {
