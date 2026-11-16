@@ -3161,7 +3161,7 @@ function auraTexOf(k) {   // a small flame tongue / a six-armed snowflake, drawn
   const tex = app.renderer.generateTexture({ target: g, resolution: 2 }); g.destroy(); return auraTex[k] = tex;
 }
 function swordAura() {   // small flame tongues licking up the blade, or snowflakes drifting off it, once the branch is on Kai
-  if (!swordBr || !bud || bud.wt < 4 || phase !== 'play' || Math.random() > (swordBr === 'fire' ? .3 * (bud.wt >= 5 ? 1.7 : 1) : .08 * (bud.wt >= 5 ? 1.3 : 1))) return;
+  if (!swordBr || !bud || bud.wt < 4 || phase !== 'play' || Math.random() > (swordBr === 'fire' ? .14 * (bud.wt >= 5 ? 1.4 : 1) : .05 * (bud.wt >= 5 ? 1.2 : 1))) return;
   const BIG = bud.wt >= 5 ? 1.35 : 1;
   const sp = bud.sp, sl = sp && sp.skeleton.findSlot('sword'), att = sl && sl.getAttachment(); if (!att || att.height == null) return;
   const L = att.height * (att.scaleY || 1), t = Math.random(), Wb = (att.width || 60) * (att.scaleX || 1), side = swordBr === 'fire' ? (Math.random() - .5) * 20 : (Math.random() < .5 ? -1 : 1) * Wb * (.75 + Math.random() * .5);   /* frost: off the blade's edges, never over it */
